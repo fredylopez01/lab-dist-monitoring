@@ -1,0 +1,18 @@
+{
+  "name": "graphql-api",
+  "version": "1.0.0",
+  "description": "API GraphQL con datos quemados y mutaciones",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "keywords": ["graphql", "api", "apollo"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@apollo/server": "^4.9.3",
+    "graphql": "^16.8.1"
+  }
+}
