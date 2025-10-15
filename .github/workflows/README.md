@@ -14,7 +14,7 @@ Este directorio contiene los workflows de GitHub Actions para CI/CD.
 3. Instalación de dependencias (`npm ci`)
 4. Ejecución de tests (opcional)
 5. Configuración de credenciales de AWS
-6. Despliegue en AWS Amplify
+6. Trigger de deployment en AWS Amplify usando AWS CLI
 
 **Secrets Requeridos:**
 - `AWS_ACCESS_KEY_ID` - Access Key de usuario IAM
