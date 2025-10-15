@@ -462,3 +462,7 @@ El archivo `.github/workflows/deploy-aws.yml` se ejecuta automáticamente en cad
 ## 📝 Licencia
 
 ISC
+
+---
+
+**Última actualización**: Workflow actualizado para usar AWS CLI
