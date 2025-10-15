@@ -503,25 +503,6 @@ Si quieres usar tu propio dominio (ej: `api.midominio.com`):
 - [Apollo Server Documentation](https://www.apollographql.com/docs/apollo-server/)
 - [GraphQL Documentation](https://graphql.org/learn/)
 
----
-
-## ✅ Checklist Final
-
-Antes de considerar el despliegue completo, verifica:
-
-- [ ] Código subido a GitHub en la rama `main`
-- [ ] App creada en AWS Amplify
-- [ ] App ID copiado y guardado
-- [ ] Usuario IAM creado con permisos de Amplify
-- [ ] Access keys creadas y guardadas
-- [ ] 4 secrets configurados en GitHub
-- [ ] Workflow verificado en `.github/workflows/deploy-aws.yml`
-- [ ] Push a `main` realizado
-- [ ] Workflow ejecutado exitosamente en Actions
-- [ ] Build completado en AWS Amplify
-- [ ] URL de la app accesible
-- [ ] GraphQL Playground funcionando
-- [ ] Queries de prueba ejecutadas correctamente
 
 ---
 
