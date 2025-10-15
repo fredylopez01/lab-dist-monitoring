@@ -32,16 +32,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
       
-      - name: Deploy to AWS Amplify
+      - name: Deploy Backend to Amplify
         run: |
-          # Triggear un nuevo build en Amplify
-          aws amplify start-job \
-            --app-id ${{ secrets.AMPLIFY_APP_ID }} \
-            --branch-name main \
-            --job-type RELEASE \
-            --region ${{ secrets.AWS_REGION }}
-        
-      - name: Wait for deployment
-        run: |
-          echo "✅ Deployment iniciado en AWS Amplify"
-          echo "Revisa el progreso en: https://console.aws.amazon.com/amplify/home?region=${{ secrets.AWS_REGION }}#/${{ secrets.AMPLIFY_APP_ID }}"
+          echo "✅ Push detectado - Amplify desplegará automáticamente"
+          echo "🔗 Monitorea el deployment en: https://console.aws.amazon.com/amplify/home?region=${{ secrets.AWS_REGION }}#/${{ secrets.AMPLIFY_APP_ID }}"
