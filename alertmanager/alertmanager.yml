@@ -1,0 +1,181 @@
+global:
+  resolve_timeout: 5m
+  # SMTP configuration for email alerts
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'your-email@gmail.com'
+  smtp_auth_username: 'your-email@gmail.com'
+  smtp_auth_password: 'your-app-password'
+  smtp_require_tls: true
+
+# Templates for alert notifications
+templates:
+  - '/etc/alertmanager/*.tmpl'
+
+# Route configuration
+route:
+  # Default receiver for all alerts
+  receiver: 'email-notifications'
+  
+  # Group alerts by these labels
+  group_by: ['alertname', 'cluster', 'service']
+  
+  # Wait time before sending first notification
+  group_wait: 10s
+  
+  # Wait time before sending notification about new alerts in group
+  group_interval: 10s
+  
+  # Wait time before resending notification
+  repeat_interval: 3h
+
+  # Routes for specific alert types
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'email-critical'
+      group_wait: 5s
+      repeat_interval: 1h
+      continue: true
+
+    # Warning alerts - standard notification
+    - match:
+        severity: warning
+      receiver: 'email-warnings'
+      group_wait: 30s
+      repeat_interval: 6h
+
+    # Host-specific alerts
+    - match:
+        category: host
+      receiver: 'email-host-alerts'
+      group_by: ['alertname', 'instance']
+
+    # Database-specific alerts
+    - match:
+        category: database
+      receiver: 'email-database-alerts'
+      group_by: ['alertname', 'database']
+
+    # Application-specific alerts
+    - match:
+        category: application
+      receiver: 'email-app-alerts'
+      group_by: ['alertname', 'job']
+
+# Inhibition rules - suppress certain alerts when others are firing
+inhibit_rules:
+  # Suppress warning if critical alert is firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'instance']
+
+  # Suppress application alerts if host is down
+  - source_match:
+      alertname: 'HostDown'
+    target_match:
+      category: 'application'
+    equal: ['instance']
+
+# Receivers configuration
+receivers:
+  # Default email receiver
+  - name: 'email-notifications'
+    email_configs:
+      - to: 'team@example.com'
+        headers:
+          Subject: '[ALERT] {{ .GroupLabels.alertname }} - {{ .GroupLabels.cluster }}'
+        html: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; }
+              .alert { padding: 15px; margin: 10px 0; border-radius: 5px; }
+              .critical { background-color: #ffebee; border-left: 5px solid #f44336; }
+              .warning { background-color: #fff3e0; border-left: 5px solid #ff9800; }
+              .resolved { background-color: #e8f5e9; border-left: 5px solid #4caf50; }
+              .details { margin-top: 10px; padding: 10px; background-color: #f5f5f5; }
+              h2 { color: #333; }
+              .label { font-weight: bold; }
+            </style>
+          </head>
+          <body>
+            <h2>🚨 Alert Notification</h2>
+            {{ range .Alerts }}
+            <div class="alert {{ .Labels.severity }}">
+              <h3>{{ .Labels.alertname }}</h3>
+              <p><span class="label">Status:</span> {{ .Status }}</p>
+              <p><span class="label">Severity:</span> {{ .Labels.severity }}</p>
+              <p><span class="label">Instance:</span> {{ .Labels.instance }}</p>
+              <p><span class="label">Summary:</span> {{ .Annotations.summary }}</p>
+              <p><span class="label">Description:</span> {{ .Annotations.description }}</p>
+              <div class="details">
+                <p><span class="label">Started at:</span> {{ .StartsAt }}</p>
+                {{ if .EndsAt }}
+                <p><span class="label">Ended at:</span> {{ .EndsAt }}</p>
+                {{ end }}
+              </div>
+            </div>
+            {{ end }}
+          </body>
+          </html>
+
+  # Critical alerts receiver
+  - name: 'email-critical'
+    email_configs:
+      - to: 'oncall@example.com, team@example.com'
+        headers:
+          Subject: '🚨 [CRITICAL ALERT] {{ .GroupLabels.alertname }}'
+        html: |
+          <!DOCTYPE html>
+          <html>
+          <body style="font-family: Arial, sans-serif;">
+            <div style="background-color: #f44336; color: white; padding: 20px; border-radius: 5px;">
+              <h1>🚨 CRITICAL ALERT</h1>
+            </div>
+            {{ range .Alerts }}
+            <div style="padding: 15px; margin: 10px 0; background-color: #ffebee; border-left: 5px solid #f44336;">
+              <h2>{{ .Labels.alertname }}</h2>
+              <p><strong>Severity:</strong> CRITICAL</p>
+              <p><strong>Instance:</strong> {{ .Labels.instance }}</p>
+              <p><strong>Summary:</strong> {{ .Annotations.summary }}</p>
+              <p><strong>Description:</strong> {{ .Annotations.description }}</p>
+              <p><strong>Time:</strong> {{ .StartsAt }}</p>
+            </div>
+            {{ end }}
+            <p style="margin-top: 20px; color: #666;">
+              This is a critical alert that requires immediate attention.
+            </p>
+          </body>
+          </html>
+
+  # Warning alerts receiver
+  - name: 'email-warnings'
+    email_configs:
+      - to: 'team@example.com'
+        headers:
+          Subject: '⚠️ [WARNING] {{ .GroupLabels.alertname }}'
+
+  # Host alerts receiver
+  - name: 'email-host-alerts'
+    email_configs:
+      - to: 'infrastructure@example.com'
+        headers:
+          Subject: '[HOST ALERT] {{ .GroupLabels.alertname }} on {{ .GroupLabels.instance }}'
+
+  # Database alerts receiver
+  - name: 'email-database-alerts'
+    email_configs:
+      - to: 'database-team@example.com'
+        headers:
+          Subject: '[DATABASE ALERT] {{ .GroupLabels.alertname }}'
+
+  # Application alerts receiver
+  - name: 'email-app-alerts'
+    email_configs:
+      - to: 'dev-team@example.com'
+        headers:
+          Subject: '[APP ALERT] {{ .GroupLabels.alertname }} - {{ .GroupLabels.job }}'

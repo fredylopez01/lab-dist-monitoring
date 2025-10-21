@@ -1,0 +1,213 @@
+groups:
+  - name: host_alerts
+    interval: 30s
+    rules:
+      # High CPU usage alert
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 2m
+        labels:
+          severity: warning
+          category: host
+        annotations:
+          summary: "High CPU usage detected on {{ $labels.instance }}"
+          description: "CPU usage is above 80% (current value: {{ $value }}%)"
+
+      # Critical CPU usage alert
+      - alert: CriticalCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+        for: 1m
+        labels:
+          severity: critical
+          category: host
+        annotations:
+          summary: "Critical CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 95% (current value: {{ $value }}%)"
+
+      # High memory usage alert
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 2m
+        labels:
+          severity: warning
+          category: host
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 85% (current value: {{ $value }}%)"
+
+      # Critical memory usage alert
+      - alert: CriticalMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 95
+        for: 1m
+        labels:
+          severity: critical
+          category: host
+        annotations:
+          summary: "Critical memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 95% (current value: {{ $value }}%)"
+
+      # High disk usage alert
+      - alert: HighDiskUsage
+        expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: host
+        annotations:
+          summary: "High disk usage on {{ $labels.instance }}"
+          description: "Disk usage is above 80% (current value: {{ $value }}%)"
+
+      # Critical disk usage alert
+      - alert: CriticalDiskUsage
+        expr: (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 90
+        for: 2m
+        labels:
+          severity: critical
+          category: host
+        annotations:
+          summary: "Critical disk usage on {{ $labels.instance }}"
+          description: "Disk usage is above 90% (current value: {{ $value }}%)"
+
+  - name: mysql_alerts
+    interval: 30s
+    rules:
+      # MySQL is down
+      - alert: MySQLDown
+        expr: mysql_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: database
+        annotations:
+          summary: "MySQL database is down"
+          description: "MySQL instance {{ $labels.instance }} is not responding"
+
+      # High MySQL connections
+      - alert: HighMySQLConnections
+        expr: (mysql_global_status_threads_connected / mysql_global_variables_max_connections) * 100 > 80
+        for: 2m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "High MySQL connections on {{ $labels.instance }}"
+          description: "MySQL connections are above 80% of max (current: {{ $value }}%)"
+
+      # MySQL slow queries
+      - alert: MySQLSlowQueries
+        expr: rate(mysql_global_status_slow_queries[5m]) > 5
+        for: 2m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "High number of slow queries on {{ $labels.instance }}"
+          description: "Slow queries rate: {{ $value }} queries/second"
+
+      # MySQL connection errors
+      - alert: MySQLConnectionErrors
+        expr: rate(mysql_global_status_connection_errors_total[5m]) > 1
+        for: 2m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "MySQL connection errors on {{ $labels.instance }}"
+          description: "Connection errors rate: {{ $value }} errors/second"
+
+  - name: application_alerts
+    interval: 30s
+    rules:
+      # Application instance down
+      - alert: ApplicationInstanceDown
+        expr: up{job=~"app1|app2"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: application
+        annotations:
+          summary: "Application instance {{ $labels.instance }} is down"
+          description: "The application instance {{ $labels.job }} is not responding"
+
+      # High application response time
+      - alert: HighApplicationResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+          category: application
+        annotations:
+          summary: "High response time on {{ $labels.instance }}"
+          description: "95th percentile response time is above 1 second (current: {{ $value }}s)"
+
+      # High application error rate
+      - alert: HighApplicationErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: warning
+          category: application
+        annotations:
+          summary: "High error rate on {{ $labels.instance }}"
+          description: "Error rate is above 5% (current: {{ $value }})"
+
+  - name: nginx_alerts
+    interval: 30s
+    rules:
+      # Nginx is down
+      - alert: NginxDown
+        expr: up{job="nginx"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: load-balancer
+        annotations:
+          summary: "Nginx load balancer is down"
+          description: "Nginx instance {{ $labels.instance }} is not responding"
+
+      # High Nginx active connections
+      - alert: HighNginxConnections
+        expr: nginx_connections_active > 1000
+        for: 2m
+        labels:
+          severity: warning
+          category: load-balancer
+        annotations:
+          summary: "High number of active connections on Nginx"
+          description: "Active connections: {{ $value }}"
+
+      # High Nginx request rate
+      - alert: HighNginxRequestRate
+        expr: rate(nginx_http_requests_total[5m]) > 1000
+        for: 2m
+        labels:
+          severity: warning
+          category: load-balancer
+        annotations:
+          summary: "High request rate on Nginx"
+          description: "Request rate: {{ $value }} requests/second"
+
+  - name: container_alerts
+    interval: 30s
+    rules:
+      # Container restart alert
+      - alert: ContainerRestarted
+        expr: changes(container_last_seen[5m]) > 2
+        for: 1m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "Container {{ $labels.name }} has restarted"
+          description: "Container has restarted {{ $value }} times in the last 5 minutes"
+
+      # Multiple containers down
+      - alert: MultipleContainersDown
+        expr: count(up{job=~"app1|app2"} == 0) > 1
+        for: 1m
+        labels:
+          severity: critical
+          category: container
+        annotations:
+          summary: "Multiple application containers are down"
+          description: "{{ $value }} application containers are not responding"

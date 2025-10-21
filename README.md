@@ -1,101 +1,210 @@
-# API GraphQL de Fútbol con Historial de Partidos
+# 🎯 Laboratorio de Monitoreo y Observabilidad - Sistema Distribuido
 
-Esta es una API GraphQL completa que incluye datos quemados (hardcoded) de jugadores de fútbol, partidos históricos, estadios y actuaciones de jugadores.
+Sistema completo de monitoreo para una aplicación distribuida con microservicios, base de datos MySQL, balanceador de carga y stack de observabilidad (Prometheus + Grafana + Alertmanager).
 
-## 🚀 Características
+## 📋 Descripción
 
-- **Tipos**: Players (Jugadores), Matches (Partidos), Stadiums (Estadios) y PlayerPerformances (Actuaciones)
-- **Datos quemados**: Arrays en memoria que simulan una base de datos de fútbol
-- **Queries**: Consultar jugadores, partidos, estadios y actuaciones
-- **Mutaciones**: Crear, actualizar y eliminar datos
-- **Relaciones**: Los partidos están vinculados a estadios, los jugadores tienen actuaciones en partidos específicos
-- **Despliegue Automático**: Integración con AWS Amplify mediante GitHub Actions
+Este laboratorio implementa:
+- ✅ 2 instancias de aplicación GraphQL (Node.js)
+- ✅ Base de datos MySQL con persistencia
+- ✅ Balanceador de carga Nginx (round-robin)
+- ✅ Stack de monitoreo: Prometheus + Grafana + Alertmanager
+- ✅ Exporters: node_exporter, mysqld_exporter, nginx_exporter
+- ✅ Dashboard con 13+ métricas clave
+- ✅ 18 reglas de alerta configuradas
+- ✅ Notificaciones por email
 
-## 📦 Instalación
+## 🏗️ Arquitectura
+
+```
+Usuario → Nginx (LB) → App1 / App2 → MySQL
+              ↓
+         Prometheus ← Exporters (node, mysql, nginx)
+              ↓
+          Grafana (Dashboard)
+              ↓
+        Alertmanager → Email
+```
+
+## 🚀 Inicio Rápido
+
+### 0. Verificar Docker
+
+**IMPORTANTE**: Docker Desktop debe estar corriendo antes de empezar.
+
+```bash
+# Verificar que Docker está corriendo
+docker info
+```
+
+Si ves un error, **inicia Docker Desktop** desde Applications y espera a que esté listo.
+
+### 1. Configurar Email para Alertas
+
+Edita `alertmanager/alertmanager.yml`:
+
+```yaml
+global:
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: 'TU-EMAIL@gmail.com'
+  smtp_auth_username: 'TU-EMAIL@gmail.com'
+  smtp_auth_password: 'TU-APP-PASSWORD'
+```
+
+**Para Gmail**: Genera un "App Password" en https://myaccount.google.com/apppasswords
+
+También actualiza el destinatario:
+```yaml
+receivers:
+  - name: 'email-notifications'
+    email_configs:
+      - to: 'TU-EMAIL@example.com'
+```
+
+### 2. Instalar Dependencias
 
 ```bash
 npm install
 ```
 
-## 🏃‍♂️ Ejecutar el servidor
+### 3. Iniciar el Sistema
 
 ```bash
-# Modo normal
-npm start
-
-# Modo desarrollo (con watch)
-npm run dev
+./scripts/start.sh
 ```
 
-El servidor estará disponible en: `http://localhost:4000`
-
-## 📊 Estructura de Datos
-
-### Jugador (Player)
-```graphql
-type Player {
-  id: ID!
-  name: String!
-  position: String!
-  team: String!
-  age: Int!
-  nationality: String!
-  goals: Int!
-  assists: Int!
-  matchesPlayed: Int!
-  matches: [Match!]!
-}
+O manualmente:
+```bash
+docker-compose build
+docker-compose up -d
 ```
 
-### Partido (Match)
-```graphql
-type Match {
-  id: ID!
-  homeTeam: String!
-  awayTeam: String!
-  homeScore: Int!
-  awayScore: Int!
-  date: String!
-  competition: String!
-  stadiumId: ID!
-  stadium: Stadium!
-  playerPerformances: [PlayerPerformance!]!
-}
+### 4. Verificar Servicios
+
+```bash
+docker-compose ps
+./scripts/test-mysql.sh
 ```
 
-### Estadio (Stadium)
-```graphql
-type Stadium {
-  id: ID!
-  name: String!
-  city: String!
-  country: String!
-  capacity: Int!
-  yearBuilt: Int
-  matches: [Match!]!
-}
+## 🌐 Acceso a las Interfaces
+
+| Servicio | URL | Credenciales |
+|----------|-----|--------------|
+| **Grafana** | http://localhost:3000 | admin/admin |
+| **Prometheus** | http://localhost:9090 | - |
+| **Alertmanager** | http://localhost:9093 | - |
+| **Aplicación (LB)** | http://localhost | - |
+| **App1 (directo)** | http://localhost:4001/graphql | - |
+| **App2 (directo)** | http://localhost:4002/graphql | - |
+| **MySQL** | localhost:3306 | root/rootpassword |
+
+## 📊 Dashboard de Grafana - 13 Métricas
+
+### Host (6 métricas)
+1. **CPU Usage (%)** - Porcentaje de uso de CPU del host
+2. **Memory Usage (%)** - Porcentaje de RAM utilizada
+3. **Disk Usage (%)** - Espacio en disco utilizado
+4. **Network Traffic** - Bytes enviados/recibidos por segundo
+5. **System Load Average** - Carga del sistema (1m, 5m, 15m)
+6. **Memory Details** - Memoria total, disponible y usada
+
+### MySQL (3 métricas)
+7. **MySQL Status** - Estado UP/DOWN de la base de datos
+8. **MySQL Connections** - Conexiones activas y threads
+9. **MySQL Query Rate** - Queries por segundo (total y lentas)
+
+### Aplicación (2 métricas)
+10. **App Instance 1 Status** - Estado de la primera instancia
+11. **App Instance 2 Status** - Estado de la segunda instancia
+
+### Nginx (2 métricas)
+12. **Nginx Connections** - Conexiones activas en el balanceador
+13. **Nginx Request Rate** - Peticiones HTTP por segundo
+
+## 🚨 Sistema de Alertas (18 Reglas)
+
+### Host (6 alertas)
+- HighCPUUsage (>80% por 2min)
+- CriticalCPUUsage (>95% por 1min)
+- HighMemoryUsage (>85% por 2min)
+- CriticalMemoryUsage (>95% por 1min)
+- HighDiskUsage (>80% por 5min)
+- CriticalDiskUsage (>90% por 2min)
+
+### MySQL (4 alertas)
+- MySQLDown (no responde por 1min)
+- HighMySQLConnections (>80% del máximo)
+- MySQLSlowQueries (>5/sec)
+- MySQLConnectionErrors (>1/sec)
+
+### Aplicación (3 alertas)
+- ApplicationInstanceDown
+- HighApplicationResponseTime (P95 >1s)
+- HighApplicationErrorRate (>5%)
+
+### Nginx (3 alertas)
+- NginxDown
+- HighNginxConnections (>1000)
+- HighNginxRequestRate (>1000/sec)
+
+### Contenedores (2 alertas)
+- ContainerRestarted (>2 veces en 5min)
+- MultipleContainersDown
+
+## 🧪 Scripts de Prueba
+
+```bash
+# Probar conexión MySQL
+./scripts/test-mysql.sh
+
+# Probar balanceo de carga
+./scripts/test-load-balancer.sh
+
+# Generar carga en el sistema
+./scripts/generate-load.sh
+
+# Provocar alerta MySQL
+./scripts/trigger-alert-mysql.sh
+
+# Provocar alerta App
+./scripts/trigger-alert-app.sh
+
+# Restaurar servicios
+./scripts/restore-services.sh
+
+# Detener sistema
+./scripts/stop.sh
 ```
 
-### Actuación del Jugador (PlayerPerformance)
-```graphql
-type PlayerPerformance {
-  id: ID!
-  playerId: ID!
-  player: Player!
-  matchId: ID!
-  match: Match!
-  goals: Int!
-  assists: Int!
-  minutesPlayed: Int!
-  yellowCards: Int!
-  redCards: Int!
-  rating: Float
-}
+## 🗄️ Base de Datos MySQL
+
+### Schema
+
+**4 Tablas principales:**
+- `players` - Jugadores de fútbol
+- `stadiums` - Estadios
+- `matches` - Partidos (FK a stadiums)
+- `player_performances` - Actuaciones (FK a players y matches)
+
+### Acceder a MySQL
+
+```bash
+# Desde el host
+docker-compose exec mysql mysql -uroot -prootpassword football_db
+
+# Ver tablas
+SHOW TABLES;
+
+# Ver jugadores
+SELECT * FROM players;
+
+# Salir
+exit
 ```
 
-## 📝 Queries de Ejemplo
+### Queries GraphQL de Ejemplo
 
-### Obtener todos los jugadores
+**Obtener jugadores:**
 ```graphql
 query {
   players {
@@ -103,45 +212,38 @@ query {
     name
     position
     team
-    age
-    nationality
     goals
     assists
-    matchesPlayed
   }
 }
 ```
 
-### Obtener jugadores por equipo
+**Crear jugador:**
 ```graphql
-query {
-  playersByTeam(team: "Real Madrid") {
+mutation {
+  createPlayer(input: {
+    name: "Nuevo Jugador"
+    position: "Delantero"
+    team: "FC Test"
+    age: 25
+    nationality: "España"
+  }) {
     id
     name
-    position
-    goals
-    assists
-    matches {
-      id
-      homeTeam
-      awayTeam
-      competition
-    }
+    team
   }
 }
 ```
 
-### Obtener todos los partidos
+**Obtener partidos con estadio:**
 ```graphql
 query {
   matches {
     id
-    homeTeam
-    awayTeam
-    homeScore
-    awayScore
-    date
-    competition
+    home_team
+    away_team
+    home_score
+    away_score
     stadium {
       name
       city
@@ -151,318 +253,261 @@ query {
 }
 ```
 
-### Obtener partidos por equipo
-```graphql
-query {
-  matchesByTeam(team: "Real Madrid") {
-    id
-    homeTeam
-    awayTeam
-    homeScore
-    awayScore
-    competition
-    stadium {
-      name
-    }
-  }
-}
+## 🎬 Demostración para Sustentación
+
+### 1. Mostrar el Dashboard (5 min)
+1. Abrir Grafana: http://localhost:3000
+2. Login: admin/admin
+3. Dashboard: "Sistema Distribuido - Monitoreo Completo"
+4. Explicar las 13 métricas visibles
+
+### 2. Demostrar Balanceo de Carga (2 min)
+```bash
+./scripts/test-load-balancer.sh
+```
+Deberías ver alternancia entre `app1` y `app2`.
+
+### 3. Provocar Alerta (5 min)
+
+**Opción A - MySQL Down:**
+```bash
+./scripts/trigger-alert-mysql.sh
 ```
 
-### Obtener todos los estadios
-```graphql
-query {
-  stadiums {
-    id
-    name
-    city
-    country
-    capacity
-    yearBuilt
-    matches {
-      id
-      homeTeam
-      awayTeam
-      date
-    }
-  }
-}
+**Opción B - App Down:**
+```bash
+./scripts/trigger-alert-app.sh
 ```
 
-### Obtener actuaciones de un jugador
-```graphql
-query {
-  performancesByPlayer(playerId: "1") {
-    id
-    goals
-    assists
-    minutesPlayed
-    rating
-    match {
-      homeTeam
-      awayTeam
-      date
-      competition
-    }
-  }
-}
+**Qué mostrar:**
+1. Prometheus Alerts: http://localhost:9090/alerts
+   - Estado PENDING → FIRING
+2. Alertmanager: http://localhost:9093
+3. Email recibido con la notificación
+
+**Restaurar:**
+```bash
+docker-compose start mysql  # o app1
 ```
 
-## 🔄 Mutaciones de Ejemplo
+## 📈 Queries PromQL Útiles
 
-### Crear un nuevo jugador
-```graphql
-mutation {
-  createPlayer(input: {
-    name: "Jude Bellingham"
-    position: "Centrocampista"
-    team: "Real Madrid"
-    age: 21
-    nationality: "Inglaterra"
-    goals: 50
-    assists: 30
-    matchesPlayed: 100
-  }) {
-    id
-    name
-    position
-    team
-    nationality
-  }
-}
+```promql
+# CPU Usage
+100 - (avg(irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+
+# Memory Usage
+(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100
+
+# Disk Usage
+(1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100
+
+# MySQL Connections
+mysql_global_status_threads_connected
+
+# MySQL Query Rate
+rate(mysql_global_status_queries[5m])
+
+# Nginx Request Rate
+rate(nginx_http_requests_total[5m])
+
+# App Status
+up{job=~"app1|app2"}
 ```
 
-### Actualizar estadísticas de un jugador
-```graphql
-mutation {
-  updatePlayer(input: {
-    id: "1"
-    goals: 851
-    assists: 351
-  }) {
-    id
-    name
-    goals
-    assists
-    team
-  }
-}
-```
+## 🛠️ Comandos Docker Útiles
 
-### Crear un nuevo partido
-```graphql
-mutation {
-  createMatch(input: {
-    homeTeam: "Real Madrid"
-    awayTeam: "Atlético Madrid"
-    homeScore: 3
-    awayScore: 1
-    date: "2024-12-01T20:00:00Z"
-    competition: "La Liga"
-    stadiumId: "1"
-  }) {
-    id
-    homeTeam
-    awayTeam
-    homeScore
-    awayScore
-    stadium {
-      name
-    }
-  }
-}
-```
+```bash
+# Ver logs de todos los servicios
+docker-compose logs -f
 
-### Crear un nuevo estadio
-```graphql
-mutation {
-  createStadium(input: {
-    name: "Nuevo Estadio"
-    city: "Madrid"
-    country: "España"
-    capacity: 80000
-    yearBuilt: 2024
-  }) {
-    id
-    name
-    city
-    capacity
-  }
-}
-```
+# Ver logs de un servicio específico
+docker-compose logs -f prometheus
 
-### Crear actuación de jugador en un partido
-```graphql
-mutation {
-  createPlayerPerformance(input: {
-    playerId: "1"
-    matchId: "1"
-    goals: 2
-    assists: 1
-    minutesPlayed: 90
-    yellowCards: 0
-    redCards: 0
-    rating: 9.5
-  }) {
-    id
-    goals
-    assists
-    rating
-    player {
-      name
-    }
-    match {
-      homeTeam
-      awayTeam
-    }
-  }
-}
-```
+# Ver estado de servicios
+docker-compose ps
 
-### Eliminar un jugador
-```graphql
-mutation {
-  deletePlayer(id: "1")
-}
-```
+# Reiniciar un servicio
+docker-compose restart app1
 
-### Eliminar un partido
-```graphql
-mutation {
-  deleteMatch(id: "1")
-}
+# Detener todo
+docker-compose stop
+
+# Eliminar todo (incluyendo volúmenes)
+docker-compose down -v
+
+# Reconstruir imágenes
+docker-compose build --no-cache
 ```
 
 ## 📁 Estructura del Proyecto
 
 ```
 distribuidos/
-├── package.json          # Configuración del proyecto
-├── index.js              # Archivo principal del servidor
-├── schema.js             # Definición de tipos GraphQL
-├── resolvers.js          # Resolvers para queries y mutaciones
-├── data.js               # Datos quemados y funciones helper
-└── README.md             # Este archivo
+├── docker-compose.yml          # Orquestación de 11 servicios
+├── Dockerfile                  # Imagen de la aplicación
+├── package.json                # Dependencias Node.js
+│
+├── index.js                    # Servidor GraphQL con MySQL
+├── db.js                       # Conexión a MySQL
+├── schema.js                   # Schema GraphQL
+├── resolvers.js                # Resolvers con SQL
+│
+├── prometheus/
+│   ├── prometheus.yml          # Config con 7 scrape jobs
+│   └── alert_rules.yml         # 18 reglas de alerta
+│
+├── alertmanager/
+│   └── alertmanager.yml        # Config de notificaciones
+│
+├── nginx/
+│   ├── nginx.conf              # Load balancer round-robin
+│   └── status.conf             # Endpoint de métricas
+│
+├── mysql/
+│   └── init.sql                # Schema y datos iniciales
+│
+├── grafana/
+│   ├── provisioning/
+│   │   ├── datasources/        # Prometheus datasource
+│   │   └── dashboards/         # Dashboard provisioning
+│   └── dashboards/
+│       └── system-monitoring.json  # Dashboard con 13 métricas
+│
+└── scripts/
+    ├── start.sh                # Iniciar sistema
+    ├── stop.sh                 # Detener sistema
+    ├── test-mysql.sh           # Probar MySQL
+    ├── test-load-balancer.sh   # Probar balanceo
+    ├── generate-load.sh        # Generar carga
+    ├── trigger-alert-mysql.sh  # Provocar alerta MySQL
+    ├── trigger-alert-app.sh    # Provocar alerta App
+    └── restore-services.sh     # Restaurar servicios
 ```
 
-## 🛠️ Tecnologías Utilizadas
+## 🐛 Troubleshooting
 
-- **Apollo Server**: Servidor GraphQL
-- **GraphQL**: Lenguaje de consulta
-- **Node.js**: Runtime de JavaScript
-- **ES Modules**: Sintaxis moderna de JavaScript
+### ❌ Docker no está corriendo
 
-## 🎯 Datos de Ejemplo Incluidos
+**Error**: `Cannot connect to the Docker daemon`
 
-La API viene con datos de ejemplo de fútbol:
-- 7 jugadores de fútbol famosos con estadísticas reales
-- 5 estadios icónicos con información detallada
-- 5 partidos históricos memorables
-- 10 actuaciones específicas de jugadores en partidos
+**Solución**:
+1. Abre **Docker Desktop** desde Applications
+2. Espera a que el ícono deje de parpadear
+3. Verifica: `docker info`
+4. Reinicia Docker Desktop si es necesario
 
-### Jugadores incluidos:
-- Lionel Messi (Inter Miami)
-- Cristiano Ronaldo (Al Nassr)
-- Kylian Mbappé (Real Madrid)
-- Erling Haaland (Manchester City)
-- Pedri (FC Barcelona)
-- Vinicius Jr (Real Madrid)
-- Kevin De Bruyne (Manchester City)
+Ver guía completa: `TROUBLESHOOTING.md`
 
-### Estadios incluidos:
-- Santiago Bernabéu (Madrid, España)
-- Camp Nou (Barcelona, España)
-- Wembley Stadium (Londres, Inglaterra)
-- Allianz Arena (Múnich, Alemania)
-- Etihad Stadium (Manchester, Inglaterra)
-
-### Partidos históricos:
-- Real Madrid vs FC Barcelona (El Clásico)
-- Manchester City vs Liverpool (Premier League)
-- Bayern Munich vs Borussia Dortmund (Der Klassiker)
-- Argentina vs Francia (Final Mundial 2022)
-- FC Barcelona vs PSG (Remontada histórica)
-
-## 🔍 Explorar la API
-
-Una vez que el servidor esté ejecutándose, puedes:
-1. Ir a `http://localhost:4000` para acceder al Apollo Studio
-2. Explorar el esquema en la pestaña "Schema"
-3. Probar las queries y mutaciones en la pestaña "Operations"
-
----
-
-## ☁️ Despliegue en AWS Amplify
-
-Este proyecto está configurado para despliegue automático en AWS Amplify mediante GitHub Actions.
-
-### Inicio Rápido
-
-1. **Sube el código a GitHub**
-2. **Crea una app en AWS Amplify** conectada a tu repositorio
-3. **Configura secrets en GitHub** (credenciales de AWS)
-4. **Haz push a `main`** y el despliegue ocurre automáticamente
-
-### Documentación Completa
-
-- **[QUICKSTART.md](./QUICKSTART.md)** - Pasos rápidos para desplegar (5-10 minutos)
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Guía completa con todos los detalles
-
-### Secrets Requeridos en GitHub
-
-Configura estos secrets en **Settings > Secrets and variables > Actions**:
-
-| Secret | Descripción |
-|--------|-------------|
-| `AWS_ACCESS_KEY_ID` | Access Key de usuario IAM |
-| `AWS_SECRET_ACCESS_KEY` | Secret Key de usuario IAM |
-| `AWS_REGION` | Región de AWS (ej: `us-east-1`) |
-| `AMPLIFY_APP_ID` | ID de tu app en Amplify |
-
-### Workflow
-
-El archivo `.github/workflows/deploy-aws.yml` se ejecuta automáticamente en cada push a `main`:
-
-1. ✅ Instala dependencias
-2. ✅ Ejecuta tests (si existen)
-3. ✅ Configura credenciales de AWS
-4. ✅ Despliega en AWS Amplify
-
----
-
-## 📁 Estructura del Proyecto
-
-```
-.
-├── .github/
-│   └── workflows/
-│       └── deploy-aws.yml    # GitHub Actions workflow
-├── data.js                   # Datos quemados y funciones helper
-├── schema.js                 # Definición del esquema GraphQL
-├── resolvers.js              # Resolvers de queries y mutaciones
-├── index.js                  # Servidor Apollo
-├── package.json              # Dependencias
-├── README.md                 # Este archivo
-├── QUICKSTART.md             # Guía rápida de despliegue
-├── DEPLOYMENT.md             # Guía completa de despliegue
-└── .gitignore                # Archivos ignorados por Git
+### Servicios no inician
+```bash
+docker-compose down -v
+docker-compose up -d
 ```
 
+### Puerto ocupado
+```bash
+lsof -i :3000
+kill -9 <PID>
+```
+
+### Prometheus no recolecta métricas
+- Verificar: http://localhost:9090/targets
+- Todos deben estar en estado "UP"
+
+### MySQL no conecta
+```bash
+docker-compose logs mysql
+docker-compose restart mysql
+./scripts/test-mysql.sh
+```
+
+### No llegan emails
+- Verificar config en `alertmanager/alertmanager.yml`
+- Ver logs: `docker-compose logs alertmanager`
+- Verificar App Password de Gmail
+
+### Grafana no muestra datos
+- Verificar datasource: Configuration → Data Sources → Prometheus
+- URL debe ser: `http://prometheus:9090`
+- Click "Save & Test"
+
+## 🎓 Conceptos Aplicados
+
+- **Orquestación de contenedores** - Docker Compose
+- **Redes virtuales** - Red bridge para comunicación
+- **Volúmenes persistentes** - Datos de MySQL, Prometheus, Grafana
+- **Balanceo de carga** - Nginx round-robin
+- **Service Discovery** - Prometheus descubre targets
+- **Health Checks** - Verificación de salud de servicios
+- **Observabilidad** - Métricas, alertas, visualización
+- **Alerting** - Sistema proactivo de notificaciones
+- **High Availability** - Múltiples instancias de aplicación
+- **Monitoring as Code** - Configuración versionada
+
+## 📦 Tecnologías
+
+| Componente | Tecnología | Puerto |
+|------------|-----------|--------|
+| Aplicación | Node.js + Apollo GraphQL | 4000 |
+| Base de Datos | MySQL 8.0 | 3306 |
+| Load Balancer | Nginx | 80, 8080 |
+| Monitoreo | Prometheus | 9090 |
+| Visualización | Grafana | 3000 |
+| Alertas | Alertmanager | 9093 |
+| Host Metrics | node_exporter | 9100 |
+| MySQL Metrics | mysqld_exporter | 9104 |
+| Nginx Metrics | nginx_exporter | 9113 |
+
+## ✅ Checklist de Evaluación
+
+### Análisis del Código (50%)
+- [x] docker-compose.yml con servicios, redes y volúmenes
+- [x] prometheus.yml con scrape_configs para todos los targets
+- [x] alert_rules.yml con reglas en PromQL
+- [x] nginx.conf con balanceo round-robin
+- [x] Dashboard con 13+ métricas relevantes
+- [x] Exporters configurados (node, mysql, nginx)
+- [x] Alertmanager configurado para email
+
+### Sustentación (50%)
+- [ ] Sistema levantado con docker-compose
+- [ ] Demostración de balanceo de carga
+- [ ] Dashboard en Grafana funcional
+- [ ] Explicación de 10+ métricas
+- [ ] Alerta provocada (MySQL o App down)
+- [ ] Alerta en PENDING → FIRING en Prometheus
+- [ ] Email recibido mostrado
+
+## 📚 Recursos Adicionales
+
+- [Prometheus Documentation](https://prometheus.io/docs/)
+- [Grafana Documentation](https://grafana.com/docs/)
+- [PromQL Basics](https://prometheus.io/docs/prometheus/latest/querying/basics/)
+- [Docker Compose](https://docs.docker.com/compose/)
+- [MySQL Documentation](https://dev.mysql.com/doc/)
+
+## 🎯 Próximos Pasos
+
+1. **Configurar email** en `alertmanager/alertmanager.yml`
+2. **Instalar dependencias**: `npm install`
+3. **Iniciar sistema**: `./scripts/start.sh`
+4. **Verificar acceso**: Abrir Grafana, Prometheus, Alertmanager
+5. **Practicar demo**: Ejecutar scripts de prueba
+6. **Preparar sustentación**: Revisar explicación de métricas
+
+## 📞 Soporte
+
+- Revisar logs: `docker-compose logs -f`
+- Verificar targets: http://localhost:9090/targets
+- Verificar alertas: http://localhost:9090/alerts
+- Ver arquitectura: `ARCHITECTURE_DIAGRAM.txt`
+
 ---
 
-## 🤝 Contribuir
+**¡Sistema completo y listo para el laboratorio!** 🚀
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
----
-
-## 📝 Licencia
-
-ISC
-
----
-
-**Última actualización**: Workflow actualizado para usar AWS CLI
+```bash
+npm install
+./scripts/start.sh
+```

@@ -9,21 +9,25 @@ export const typeDefs = `
     nationality: String!
     goals: Int!
     assists: Int!
-    matchesPlayed: Int!
+    matches_played: Int!
+    created_at: String
+    updated_at: String
     matches: [Match!]!
   }
 
   # Tipo Partido
   type Match {
     id: ID!
-    homeTeam: String!
-    awayTeam: String!
-    homeScore: Int!
-    awayScore: Int!
-    date: String!
+    home_team: String!
+    away_team: String!
+    home_score: Int!
+    away_score: Int!
+    match_date: String!
     competition: String!
-    stadiumId: ID!
-    stadium: Stadium!
+    stadium_id: ID
+    created_at: String
+    updated_at: String
+    stadium: Stadium
     playerPerformances: [PlayerPerformance!]!
   }
 
@@ -34,23 +38,27 @@ export const typeDefs = `
     city: String!
     country: String!
     capacity: Int!
-    yearBuilt: Int
+    year_built: Int
+    created_at: String
+    updated_at: String
     matches: [Match!]!
   }
 
   # Tipo Actuación del Jugador en un Partido
   type PlayerPerformance {
     id: ID!
-    playerId: ID!
+    player_id: ID!
     player: Player!
-    matchId: ID!
+    match_id: ID!
     match: Match!
     goals: Int!
     assists: Int!
-    minutesPlayed: Int!
-    yellowCards: Int!
-    redCards: Int!
+    minutes_played: Int!
+    yellow_cards: Int!
+    red_cards: Int!
     rating: Float
+    created_at: String
+    updated_at: String
   }
 
   # Inputs para las mutaciones

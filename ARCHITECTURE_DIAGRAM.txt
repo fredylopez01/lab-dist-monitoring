@@ -1,0 +1,244 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    ARQUITECTURA DEL SISTEMA DE MONITOREO                     ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              CAPA DE USUARIOS                                │
+└──────────────────────────────┬──────────────────────────────────────────────┘
+                               │
+                               │ HTTP Requests
+                               ▼
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                         NGINX LOAD BALANCER                                  │
+│                                                                              │
+│  • Puerto: 80 (HTTP)                                                         │
+│  • Puerto: 8080 (Metrics)                                                    │
+│  • Algoritmo: Round-robin                                                    │
+│  • Health checks: Activos                                                    │
+│                                                                              │
+│  nginx_exporter :9113 ──────────────────────────────────────────────┐       │
+└────────────┬─────────────────┬───────────────────────────────────────┼───────┘
+             │                 │                                       │
+             │                 │                                       │
+   ┌─────────▼────────┐  ┌────▼──────────┐                           │
+   │   APP INSTANCE 1 │  │ APP INSTANCE 2│                           │
+   │                  │  │               │                           │
+   │  • Port: 4001    │  │ • Port: 4002  │                           │
+   │  • GraphQL API   │  │ • GraphQL API │                           │
+   │  • Node.js 18    │  │ • Node.js 18  │                           │
+   │  • Metrics: 4000 │  │ • Metrics:4000│                           │
+   │                  │  │               │                           │
+   │  Health: /health │  │ Health:/health│                           │
+   └────────┬─────────┘  └────┬──────────┘                           │
+            │                 │                                       │
+            │                 │                                       │
+            └────────┬────────┘                                       │
+                     │                                                │
+                     │ SQL Queries                                    │
+                     ▼                                                │
+   ┌──────────────────────────────────────┐                          │
+   │          MYSQL DATABASE              │                          │
+   │                                      │                          │
+   │  • Puerto: 3306                      │                          │
+   │  • Database: football_db             │                          │
+   │  • Engine: InnoDB                    │                          │
+   │  • Charset: utf8mb4                  │                          │
+   │                                      │                          │
+   │  mysqld_exporter :9104 ──────────────┼──────────────────────┐  │
+   └──────────────────────────────────────┘                      │  │
+                                                                 │  │
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          CAPA DE MONITOREO                                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                                                 │  │
+   ┌──────────────────────────────────────┐                     │  │
+   │       NODE EXPORTER (Host)           │                     │  │
+   │                                      │                     │  │
+   │  • Puerto: 9100                      │                     │  │
+   │  • Métricas: CPU, RAM, Disk, Network │                     │  │
+   │  • Colector: filesystem, cpu, etc    │                     │  │
+   └────────────────┬─────────────────────┘                     │  │
+                    │                                           │  │
+                    │                                           │  │
+                    │         ┌─────────────────────────────────┘  │
+                    │         │  ┌──────────────────────────────────┘
+                    │         │  │
+                    ▼         ▼  ▼
+   ┌──────────────────────────────────────────────────────────────────┐
+   │                      PROMETHEUS                                  │
+   │                                                                  │
+   │  • Puerto: 9090                                                  │
+   │  • Scrape interval: 15s                                          │
+   │  • Retention: 15 días                                            │
+   │  • Storage: TSDB                                                 │
+   │                                                                  │
+   │  Targets:                                                        │
+   │    ✓ prometheus:9090      (self)                                │
+   │    ✓ node-exporter:9100   (host metrics)                        │
+   │    ✓ mysqld-exporter:9104 (database metrics)                    │
+   │    ✓ nginx-exporter:9113  (load balancer metrics)               │
+   │    ✓ app1:4000            (app metrics)                         │
+   │    ✓ app2:4000            (app metrics)                         │
+   │                                                                  │
+   │  Alert Rules: 18 reglas configuradas                             │
+   └────────────┬─────────────────────────┬───────────────────────────┘
+                │                         │
+                │ Metrics Query           │ Alerts
+                ▼                         ▼
+   ┌────────────────────────┐   ┌──────────────────────────┐
+   │       GRAFANA          │   │     ALERTMANAGER         │
+   │                        │   │                          │
+   │  • Puerto: 3000        │   │  • Puerto: 9093          │
+   │  • User: admin         │   │  • SMTP: Configurado     │
+   │  • Pass: admin         │   │  • Routes: Por severidad │
+   │                        │   │  • Inhibition: Activa    │
+   │  Dashboards:           │   │                          │
+   │    • Sistema Completo  │   │  Receivers:              │
+   │    • 13 Métricas       │   │    • Email general       │
+   │    • Auto-refresh: 10s │   │    • Email crítico       │
+   │                        │   │    • Email por categoría │
+   └────────────────────────┘   └────────────┬─────────────┘
+                                             │
+                                             │ SMTP
+                                             ▼
+                                   ┌──────────────────┐
+                                   │  EMAIL SERVER    │
+                                   │  (Gmail/Outlook) │
+                                   └──────────────────┘
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                              FLUJO DE DATOS                                  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+1. TRÁFICO DE APLICACIÓN:
+   Usuario → Nginx (LB) → App1/App2 (round-robin) → MySQL
+
+2. RECOLECCIÓN DE MÉTRICAS:
+   Exporters → Prometheus (scrape cada 15s) → Almacenamiento TSDB
+
+3. VISUALIZACIÓN:
+   Prometheus → Grafana (query) → Dashboard → Usuario
+
+4. ALERTAS:
+   Prometheus (evalúa reglas) → Alertmanager (routing) → Email
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                            REDES Y VOLÚMENES                                 ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+REDES:
+  • monitoring (bridge): Conecta todos los servicios
+
+VOLÚMENES PERSISTENTES:
+  • mysql_data: Datos de MySQL
+  • prometheus_data: Métricas históricas
+  • grafana_data: Dashboards y configuración
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                          PUERTOS EXPUESTOS                                   ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+┌──────────────┬─────────┬────────────────────────────────────────────┐
+│   Servicio   │  Puerto │              Descripción                   │
+├──────────────┼─────────┼────────────────────────────────────────────┤
+│ Nginx        │    80   │ Load Balancer (HTTP)                       │
+│ Nginx Status │  8080   │ Stub status para métricas                  │
+│ Grafana      │  3000   │ Dashboard de visualización                 │
+│ MySQL        │  3306   │ Base de datos                              │
+│ App1         │  4001   │ Instancia 1 de la aplicación               │
+│ App2         │  4002   │ Instancia 2 de la aplicación               │
+│ Prometheus   │  9090   │ Sistema de monitoreo                       │
+│ Alertmanager │  9093   │ Gestión de alertas                         │
+│ Node Exp.    │  9100   │ Métricas del host                          │
+│ MySQL Exp.   │  9104   │ Métricas de MySQL                          │
+│ Nginx Exp.   │  9113   │ Métricas de Nginx                          │
+└──────────────┴─────────┴────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                      HEALTH CHECKS CONFIGURADOS                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+MySQL:
+  • Test: mysqladmin ping
+  • Interval: 10s
+  • Timeout: 5s
+  • Retries: 5
+
+App1 & App2:
+  • Test: wget /.well-known/apollo/server-health
+  • Interval: 30s
+  • Timeout: 10s
+  • Retries: 3
+
+Nginx:
+  • Test: wget /stub_status
+  • Interval: 10s
+  • Timeout: 5s
+  • Retries: 3
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         MÉTRICAS RECOLECTADAS                                ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+HOST (node_exporter):
+  • CPU: Usage, idle, system, user
+  • Memory: Total, available, used, buffers, cache
+  • Disk: Size, used, available, I/O
+  • Network: Bytes sent/received, packets, errors
+  • Load: 1m, 5m, 15m averages
+
+MYSQL (mysqld_exporter):
+  • Connections: Active, max, errors
+  • Queries: Total, slow, rate
+  • Threads: Connected, running, cached
+  • Buffer pool: Size, usage, hit rate
+  • InnoDB: Rows read/written/updated/deleted
+
+NGINX (nginx_exporter):
+  • Connections: Active, reading, writing, waiting
+  • Requests: Total, rate
+  • Status codes: 2xx, 3xx, 4xx, 5xx
+
+APLICACIÓN (prom-client):
+  • HTTP requests: Total, duration, status
+  • GraphQL operations: Total, duration, type
+  • Active connections: Current count
+  • Node.js: Memory, event loop, GC
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    ALERTAS CONFIGURADAS (18 TOTAL)                           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+HOST (6):
+  ⚠️  HighCPUUsage: >80% por 2min
+  🚨 CriticalCPUUsage: >95% por 1min
+  ⚠️  HighMemoryUsage: >85% por 2min
+  🚨 CriticalMemoryUsage: >95% por 1min
+  ⚠️  HighDiskUsage: >80% por 5min
+  🚨 CriticalDiskUsage: >90% por 2min
+
+MYSQL (4):
+  🚨 MySQLDown: No responde por 1min
+  ⚠️  HighMySQLConnections: >80% max por 2min
+  ⚠️  MySQLSlowQueries: >5/sec por 2min
+  ⚠️  MySQLConnectionErrors: >1/sec por 2min
+
+APLICACIÓN (3):
+  🚨 ApplicationInstanceDown: No responde por 1min
+  ⚠️  HighApplicationResponseTime: P95 >1s por 2min
+  ⚠️  HighApplicationErrorRate: >5% por 2min
+
+NGINX (3):
+  🚨 NginxDown: No responde por 1min
+  ⚠️  HighNginxConnections: >1000 por 2min
+  ⚠️  HighNginxRequestRate: >1000/sec por 2min
+
+CONTENEDORES (2):
+  ⚠️  ContainerRestarted: >2 veces en 5min
+  🚨 MultipleContainersDown: >1 app down
+
+Leyenda: 🚨 Critical | ⚠️  Warning
+
+═══════════════════════════════════════════════════════════════════════════════
+                           FIN DEL DIAGRAMA
+═══════════════════════════════════════════════════════════════════════════════

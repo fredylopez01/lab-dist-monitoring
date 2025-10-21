@@ -1,0 +1,73 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'distributed-app'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Load alert rules
+rule_files:
+  - 'alert_rules.yml'
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # Node Exporter - Host metrics (CPU, Memory, Disk, Network)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+        labels:
+          service: 'host'
+          instance: 'host-machine'
+
+  # MySQL Exporter - Database metrics
+  - job_name: 'mysql'
+    static_configs:
+      - targets: ['mysqld-exporter:9104']
+        labels:
+          service: 'mysql'
+          database: 'football_db'
+
+  # Nginx Exporter - Load balancer metrics
+  - job_name: 'nginx'
+    static_configs:
+      - targets: ['nginx-exporter:9113']
+        labels:
+          service: 'nginx'
+          role: 'load-balancer'
+
+  # Application Instance 1 - Custom app metrics
+  - job_name: 'app1'
+    static_configs:
+      - targets: ['app1:4000']
+        labels:
+          service: 'graphql-app'
+          instance: 'app1'
+
+  # Application Instance 2 - Custom app metrics
+  - job_name: 'app2'
+    static_configs:
+      - targets: ['app2:4000']
+        labels:
+          service: 'graphql-app'
+          instance: 'app2'
+
+  # Docker containers health monitoring
+  - job_name: 'docker-containers'
+    static_configs:
+      - targets: ['app1:4000', 'app2:4000']
+        labels:
+          service: 'containers'
