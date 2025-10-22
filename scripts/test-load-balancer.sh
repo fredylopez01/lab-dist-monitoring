@@ -1,9 +1,8 @@
 #!/bin/bash
 
-echo "🔄 Probando Balanceador de Carga..."
+echo "Probando Balanceador de Carga..."
 echo ""
 echo "Realizando 20 peticiones al endpoint /info"
-echo "Deberías ver alternancia entre app1 y app2:"
 echo ""
 
 for i in {1..20}; do
@@ -13,6 +12,4 @@ for i in {1..20}; do
 done
 
 echo ""
-echo "✅ Prueba completada"
-echo ""
-echo "Si ves alternancia entre app1 y app2, el balanceo está funcionando correctamente."
+echo "Prueba completada"

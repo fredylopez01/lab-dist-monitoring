@@ -15,30 +15,7 @@ Este laboratorio implementa:
 - ✅ 18 reglas de alerta configuradas
 - ✅ Notificaciones por email
 
-## 🏗️ Arquitectura
-
-```
-Usuario → Nginx (LB) → App1 / App2 → MySQL
-              ↓
-         Prometheus ← Exporters (node, mysql, nginx)
-              ↓
-          Grafana (Dashboard)
-              ↓
-        Alertmanager → Email
-```
-
-## 🚀 Inicio Rápido
-
-### 0. Verificar Docker
-
-**IMPORTANTE**: Docker Desktop debe estar corriendo antes de empezar.
-
-```bash
-# Verificar que Docker está corriendo
-docker info
-```
-
-Si ves un error, **inicia Docker Desktop** desde Applications y espera a que esté listo.
+## Inicio
 
 ### 1. Configurar Email para Alertas
 
@@ -94,6 +71,33 @@ docker-compose ps
 | **App1 (directo)**  | http://localhost:4001/graphql | -                 |
 | **App2 (directo)**  | http://localhost:4002/graphql | -                 |
 | **MySQL**           | localhost:3306                | root/rootpassword |
+
+## Pruebas
+
+```bash
+# Probar conexión MySQL
+./scripts/test-mysql.sh
+
+# Probar balanceo de carga
+./scripts/test-load-balancer.sh
+
+# Generar carga en el sistema
+./scripts/generate-load.sh
+
+# Provocar alerta MySQL
+docker-compose stop mysql
+docker-compose start mysql
+
+# Provocar alerta App
+docker-compose stop app1
+docker-compose start app1
+
+# Restaurar (Iniciar) servicios
+docker-compose start
+
+# Detener sistema
+docker-compose stop
+```
 
 ## 📊 Dashboard de Grafana - 13 Métricas
 
@@ -156,31 +160,6 @@ docker-compose ps
 
 - ContainerRestarted (>2 veces en 5min)
 - MultipleContainersDown
-
-## 🧪 Scripts de Prueba
-
-```bash
-# Probar conexión MySQL
-./scripts/test-mysql.sh
-
-# Probar balanceo de carga
-./scripts/test-load-balancer.sh
-
-# Generar carga en el sistema
-./scripts/generate-load.sh
-
-# Provocar alerta MySQL
-./scripts/trigger-alert-mysql.sh
-
-# Provocar alerta App
-./scripts/trigger-alert-app.sh
-
-# Restaurar servicios
-./scripts/restore-services.sh
-
-# Detener sistema
-./scripts/stop.sh
-```
 
 ## 🗄️ Base de Datos MySQL
 
@@ -265,50 +244,6 @@ query {
 }
 ```
 
-## 🎬 Demostración para Sustentación
-
-### 1. Mostrar el Dashboard (5 min)
-
-1. Abrir Grafana: http://localhost:3000
-2. Login: admin/admin
-3. Dashboard: "Sistema Distribuido - Monitoreo Completo"
-4. Explicar las 13 métricas visibles
-
-### 2. Demostrar Balanceo de Carga (2 min)
-
-```bash
-./scripts/test-load-balancer.sh
-```
-
-Deberías ver alternancia entre `app1` y `app2`.
-
-### 3. Provocar Alerta (5 min)
-
-**Opción A - MySQL Down:**
-
-```bash
-./scripts/trigger-alert-mysql.sh
-```
-
-**Opción B - App Down:**
-
-```bash
-./scripts/trigger-alert-app.sh
-```
-
-**Qué mostrar:**
-
-1. Prometheus Alerts: http://localhost:9090/alerts
-   - Estado PENDING → FIRING
-2. Alertmanager: http://localhost:9093
-3. Email recibido con la notificación
-
-**Restaurar:**
-
-```bash
-docker-compose start mysql  # o app1
-```
-
 ## 📈 Queries PromQL Útiles
 
 ```promql
@@ -332,31 +267,6 @@ rate(nginx_http_requests_total[5m])
 
 # App Status
 up{job=~"app1|app2"}
-```
-
-## 🛠️ Comandos Docker Útiles
-
-```bash
-# Ver logs de todos los servicios
-docker-compose logs -f
-
-# Ver logs de un servicio específico
-docker-compose logs -f prometheus
-
-# Ver estado de servicios
-docker-compose ps
-
-# Reiniciar un servicio
-docker-compose restart app1
-
-# Detener todo
-docker-compose stop
-
-# Eliminar todo (incluyendo volúmenes)
-docker-compose down -v
-
-# Reconstruir imágenes
-docker-compose build --no-cache
 ```
 
 ## 📁 Estructura del Proyecto
@@ -406,57 +316,10 @@ distribuidos/
 
 ## 🐛 Troubleshooting
 
-### ❌ Docker no está corriendo
-
-**Error**: `Cannot connect to the Docker daemon`
-
-**Solución**:
-
-1. Abre **Docker Desktop** desde Applications
-2. Espera a que el ícono deje de parpadear
-3. Verifica: `docker info`
-4. Reinicia Docker Desktop si es necesario
-
-Ver guía completa: `TROUBLESHOOTING.md`
-
-### Servicios no inician
-
-```bash
-docker-compose down -v
-docker-compose up -d
-```
-
-### Puerto ocupado
-
-```bash
-lsof -i :3000
-kill -9 <PID>
-```
-
 ### Prometheus no recolecta métricas
 
 - Verificar: http://localhost:9090/targets
 - Todos deben estar en estado "UP"
-
-### MySQL no conecta
-
-```bash
-docker-compose logs mysql
-docker-compose restart mysql
-./scripts/test-mysql.sh
-```
-
-### No llegan emails
-
-- Verificar config en `alertmanager/alertmanager.yml`
-- Ver logs: `docker-compose logs alertmanager`
-- Verificar App Password de Gmail
-
-### Grafana no muestra datos
-
-- Verificar datasource: Configuration → Data Sources → Prometheus
-- URL debe ser: `http://prometheus:9090`
-- Click "Save & Test"
 
 ## 🎓 Conceptos Aplicados
 
@@ -476,7 +339,7 @@ docker-compose restart mysql
 | Componente    | Tecnología               | Puerto   |
 | ------------- | ------------------------ | -------- |
 | Aplicación    | Node.js + Apollo GraphQL | 4000     |
-| Base de Datos | MySQL 8.0                | 3306     |
+| Base de Datos | MySQL 8.0                | 3307     |
 | Load Balancer | Nginx                    | 80, 8080 |
 | Monitoreo     | Prometheus               | 9090     |
 | Visualización | Grafana                  | 3000     |
@@ -514,28 +377,3 @@ docker-compose restart mysql
 - [PromQL Basics](https://prometheus.io/docs/prometheus/latest/querying/basics/)
 - [Docker Compose](https://docs.docker.com/compose/)
 - [MySQL Documentation](https://dev.mysql.com/doc/)
-
-## 🎯 Próximos Pasos
-
-1. **Configurar email** en `alertmanager/alertmanager.yml`
-2. **Instalar dependencias**: `npm install`
-3. **Iniciar sistema**: `docker-compose up --build -d`
-4. **Verificar acceso**: Abrir Grafana, Prometheus, Alertmanager
-5. **Practicar demo**: Ejecutar scripts de prueba
-6. **Preparar sustentación**: Revisar explicación de métricas
-
-## 📞 Soporte
-
-- Revisar logs: `docker-compose logs -f`
-- Verificar targets: http://localhost:9090/targets
-- Verificar alertas: http://localhost:9090/alerts
-- Ver arquitectura: `ARCHITECTURE_DIAGRAM.txt`
-
----
-
-**¡Sistema completo y listo para el laboratorio!** 🚀
-
-```bash
-npm install
-./scripts/start.sh
-```

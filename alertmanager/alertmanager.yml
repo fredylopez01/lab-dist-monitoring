@@ -1,30 +1,30 @@
 global:
   resolve_timeout: 5m
   # SMTP configuration for email alerts
-  smtp_smarthost: 'smtp.gmail.com:587'
-  smtp_from: 'your-email@gmail.com'
-  smtp_auth_username: 'your-email@gmail.com'
-  smtp_auth_password: 'your-app-password'
+  smtp_smarthost: "smtp.gmail.com:587"
+  smtp_from: "fredy.lopez04@uptc.edu.co"
+  smtp_auth_username: "fredy.lopez04@uptc.edu.co"
+  smtp_auth_password: "ymsx yuvl jvml rxre"
   smtp_require_tls: true
 
 # Templates for alert notifications
 templates:
-  - '/etc/alertmanager/*.tmpl'
+  - "/etc/alertmanager/*.tmpl"
 
 # Route configuration
 route:
   # Default receiver for all alerts
-  receiver: 'email-notifications'
-  
+  receiver: "email-notifications"
+
   # Group alerts by these labels
-  group_by: ['alertname', 'cluster', 'service']
-  
+  group_by: ["alertname", "cluster", "service"]
+
   # Wait time before sending first notification
   group_wait: 10s
-  
+
   # Wait time before sending notification about new alerts in group
   group_interval: 10s
-  
+
   # Wait time before resending notification
   repeat_interval: 3h
 
@@ -33,7 +33,7 @@ route:
     # Critical alerts - immediate notification
     - match:
         severity: critical
-      receiver: 'email-critical'
+      receiver: "email-critical"
       group_wait: 5s
       repeat_interval: 1h
       continue: true
@@ -41,52 +41,52 @@ route:
     # Warning alerts - standard notification
     - match:
         severity: warning
-      receiver: 'email-warnings'
+      receiver: "email-warnings"
       group_wait: 30s
       repeat_interval: 6h
 
     # Host-specific alerts
     - match:
         category: host
-      receiver: 'email-host-alerts'
-      group_by: ['alertname', 'instance']
+      receiver: "email-host-alerts"
+      group_by: ["alertname", "instance"]
 
     # Database-specific alerts
     - match:
         category: database
-      receiver: 'email-database-alerts'
-      group_by: ['alertname', 'database']
+      receiver: "email-database-alerts"
+      group_by: ["alertname", "database"]
 
     # Application-specific alerts
     - match:
         category: application
-      receiver: 'email-app-alerts'
-      group_by: ['alertname', 'job']
+      receiver: "email-app-alerts"
+      group_by: ["alertname", "job"]
 
 # Inhibition rules - suppress certain alerts when others are firing
 inhibit_rules:
   # Suppress warning if critical alert is firing
   - source_match:
-      severity: 'critical'
+      severity: "critical"
     target_match:
-      severity: 'warning'
-    equal: ['alertname', 'instance']
+      severity: "warning"
+    equal: ["alertname", "instance"]
 
   # Suppress application alerts if host is down
   - source_match:
-      alertname: 'HostDown'
+      alertname: "HostDown"
     target_match:
-      category: 'application'
-    equal: ['instance']
+      category: "application"
+    equal: ["instance"]
 
 # Receivers configuration
 receivers:
   # Default email receiver
-  - name: 'email-notifications'
+  - name: "email-notifications"
     email_configs:
-      - to: 'team@example.com'
+      - to: "fredy.lopez04@uptc.edu.co"
         headers:
-          Subject: '[ALERT] {{ .GroupLabels.alertname }} - {{ .GroupLabels.cluster }}'
+          Subject: "[ALERT] {{ .GroupLabels.alertname }} - {{ .GroupLabels.cluster }}"
         html: |
           <!DOCTYPE html>
           <html>
@@ -124,11 +124,11 @@ receivers:
           </html>
 
   # Critical alerts receiver
-  - name: 'email-critical'
+  - name: "email-critical"
     email_configs:
-      - to: 'oncall@example.com, team@example.com'
+      - to: "fredy.lopez04@uptc.edu.co, david.naranjo03@uptc.edu.co, david.rodriguez26@uptc.edu.co"
         headers:
-          Subject: '🚨 [CRITICAL ALERT] {{ .GroupLabels.alertname }}'
+          Subject: "🚨 [CRITICAL ALERT] {{ .GroupLabels.alertname }}"
         html: |
           <!DOCTYPE html>
           <html>
@@ -153,29 +153,29 @@ receivers:
           </html>
 
   # Warning alerts receiver
-  - name: 'email-warnings'
+  - name: "email-warnings"
     email_configs:
-      - to: 'team@example.com'
+      - to: "fredy.lopez04@uptc.edu.co"
         headers:
-          Subject: '⚠️ [WARNING] {{ .GroupLabels.alertname }}'
+          Subject: "⚠️ [WARNING] {{ .GroupLabels.alertname }}"
 
   # Host alerts receiver
-  - name: 'email-host-alerts'
+  - name: "email-host-alerts"
     email_configs:
-      - to: 'infrastructure@example.com'
+      - to: "fredy.lopez04@uptc.edu.co"
         headers:
-          Subject: '[HOST ALERT] {{ .GroupLabels.alertname }} on {{ .GroupLabels.instance }}'
+          Subject: "[HOST ALERT] {{ .GroupLabels.alertname }} on {{ .GroupLabels.instance }}"
 
   # Database alerts receiver
-  - name: 'email-database-alerts'
+  - name: "email-database-alerts"
     email_configs:
-      - to: 'database-team@example.com'
+      - to: "fredy.lopez04@uptc.edu.co"
         headers:
-          Subject: '[DATABASE ALERT] {{ .GroupLabels.alertname }}'
+          Subject: "[DATABASE ALERT] {{ .GroupLabels.alertname }}"
 
   # Application alerts receiver
-  - name: 'email-app-alerts'
+  - name: "email-app-alerts"
     email_configs:
-      - to: 'dev-team@example.com'
+      - to: "fredy.lopez04@uptc.edu.co"
         headers:
-          Subject: '[APP ALERT] {{ .GroupLabels.alertname }} - {{ .GroupLabels.job }}'
+          Subject: "[APP ALERT] {{ .GroupLabels.alertname }} - {{ .GroupLabels.job }}"
