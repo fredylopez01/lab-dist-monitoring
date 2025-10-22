@@ -5,6 +5,7 @@ Sistema completo de monitoreo para una aplicación distribuida con microservicio
 ## 📋 Descripción
 
 Este laboratorio implementa:
+
 - ✅ 2 instancias de aplicación GraphQL (Node.js)
 - ✅ Base de datos MySQL con persistencia
 - ✅ Balanceador de carga Nginx (round-robin)
@@ -45,20 +46,21 @@ Edita `alertmanager/alertmanager.yml`:
 
 ```yaml
 global:
-  smtp_smarthost: 'smtp.gmail.com:587'
-  smtp_from: 'TU-EMAIL@gmail.com'
-  smtp_auth_username: 'TU-EMAIL@gmail.com'
-  smtp_auth_password: 'TU-APP-PASSWORD'
+  smtp_smarthost: "smtp.gmail.com:587"
+  smtp_from: "TU-EMAIL@gmail.com"
+  smtp_auth_username: "TU-EMAIL@gmail.com"
+  smtp_auth_password: "TU-APP-PASSWORD"
 ```
 
 **Para Gmail**: Genera un "App Password" en https://myaccount.google.com/apppasswords
 
 También actualiza el destinatario:
+
 ```yaml
 receivers:
-  - name: 'email-notifications'
+  - name: "email-notifications"
     email_configs:
-      - to: 'TU-EMAIL@example.com'
+      - to: "TU-EMAIL@example.com"
 ```
 
 ### 2. Instalar Dependencias
@@ -69,11 +71,6 @@ npm install
 
 ### 3. Iniciar el Sistema
 
-```bash
-./scripts/start.sh
-```
-
-O manualmente:
 ```bash
 docker-compose build
 docker-compose up -d
@@ -88,19 +85,20 @@ docker-compose ps
 
 ## 🌐 Acceso a las Interfaces
 
-| Servicio | URL | Credenciales |
-|----------|-----|--------------|
-| **Grafana** | http://localhost:3000 | admin/admin |
-| **Prometheus** | http://localhost:9090 | - |
-| **Alertmanager** | http://localhost:9093 | - |
-| **Aplicación (LB)** | http://localhost | - |
-| **App1 (directo)** | http://localhost:4001/graphql | - |
-| **App2 (directo)** | http://localhost:4002/graphql | - |
-| **MySQL** | localhost:3306 | root/rootpassword |
+| Servicio            | URL                           | Credenciales      |
+| ------------------- | ----------------------------- | ----------------- |
+| **Grafana**         | http://localhost:3000         | admin/admin       |
+| **Prometheus**      | http://localhost:9090         | -                 |
+| **Alertmanager**    | http://localhost:9093         | -                 |
+| **Aplicación (LB)** | http://localhost              | -                 |
+| **App1 (directo)**  | http://localhost:4001/graphql | -                 |
+| **App2 (directo)**  | http://localhost:4002/graphql | -                 |
+| **MySQL**           | localhost:3306                | root/rootpassword |
 
 ## 📊 Dashboard de Grafana - 13 Métricas
 
 ### Host (6 métricas)
+
 1. **CPU Usage (%)** - Porcentaje de uso de CPU del host
 2. **Memory Usage (%)** - Porcentaje de RAM utilizada
 3. **Disk Usage (%)** - Espacio en disco utilizado
@@ -109,21 +107,25 @@ docker-compose ps
 6. **Memory Details** - Memoria total, disponible y usada
 
 ### MySQL (3 métricas)
+
 7. **MySQL Status** - Estado UP/DOWN de la base de datos
 8. **MySQL Connections** - Conexiones activas y threads
 9. **MySQL Query Rate** - Queries por segundo (total y lentas)
 
 ### Aplicación (2 métricas)
+
 10. **App Instance 1 Status** - Estado de la primera instancia
 11. **App Instance 2 Status** - Estado de la segunda instancia
 
 ### Nginx (2 métricas)
+
 12. **Nginx Connections** - Conexiones activas en el balanceador
 13. **Nginx Request Rate** - Peticiones HTTP por segundo
 
 ## 🚨 Sistema de Alertas (18 Reglas)
 
 ### Host (6 alertas)
+
 - HighCPUUsage (>80% por 2min)
 - CriticalCPUUsage (>95% por 1min)
 - HighMemoryUsage (>85% por 2min)
@@ -132,22 +134,26 @@ docker-compose ps
 - CriticalDiskUsage (>90% por 2min)
 
 ### MySQL (4 alertas)
+
 - MySQLDown (no responde por 1min)
 - HighMySQLConnections (>80% del máximo)
 - MySQLSlowQueries (>5/sec)
 - MySQLConnectionErrors (>1/sec)
 
 ### Aplicación (3 alertas)
+
 - ApplicationInstanceDown
 - HighApplicationResponseTime (P95 >1s)
 - HighApplicationErrorRate (>5%)
 
 ### Nginx (3 alertas)
+
 - NginxDown
 - HighNginxConnections (>1000)
 - HighNginxRequestRate (>1000/sec)
 
 ### Contenedores (2 alertas)
+
 - ContainerRestarted (>2 veces en 5min)
 - MultipleContainersDown
 
@@ -181,6 +187,7 @@ docker-compose ps
 ### Schema
 
 **4 Tablas principales:**
+
 - `players` - Jugadores de fútbol
 - `stadiums` - Estadios
 - `matches` - Partidos (FK a stadiums)
@@ -205,6 +212,7 @@ exit
 ### Queries GraphQL de Ejemplo
 
 **Obtener jugadores:**
+
 ```graphql
 query {
   players {
@@ -219,15 +227,18 @@ query {
 ```
 
 **Crear jugador:**
+
 ```graphql
 mutation {
-  createPlayer(input: {
-    name: "Nuevo Jugador"
-    position: "Delantero"
-    team: "FC Test"
-    age: 25
-    nationality: "España"
-  }) {
+  createPlayer(
+    input: {
+      name: "Nuevo Jugador"
+      position: "Delantero"
+      team: "FC Test"
+      age: 25
+      nationality: "España"
+    }
+  ) {
     id
     name
     team
@@ -236,6 +247,7 @@ mutation {
 ```
 
 **Obtener partidos con estadio:**
+
 ```graphql
 query {
   matches {
@@ -256,36 +268,43 @@ query {
 ## 🎬 Demostración para Sustentación
 
 ### 1. Mostrar el Dashboard (5 min)
+
 1. Abrir Grafana: http://localhost:3000
 2. Login: admin/admin
 3. Dashboard: "Sistema Distribuido - Monitoreo Completo"
 4. Explicar las 13 métricas visibles
 
 ### 2. Demostrar Balanceo de Carga (2 min)
+
 ```bash
 ./scripts/test-load-balancer.sh
 ```
+
 Deberías ver alternancia entre `app1` y `app2`.
 
 ### 3. Provocar Alerta (5 min)
 
 **Opción A - MySQL Down:**
+
 ```bash
 ./scripts/trigger-alert-mysql.sh
 ```
 
 **Opción B - App Down:**
+
 ```bash
 ./scripts/trigger-alert-app.sh
 ```
 
 **Qué mostrar:**
+
 1. Prometheus Alerts: http://localhost:9090/alerts
    - Estado PENDING → FIRING
 2. Alertmanager: http://localhost:9093
 3. Email recibido con la notificación
 
 **Restaurar:**
+
 ```bash
 docker-compose start mysql  # o app1
 ```
@@ -392,6 +411,7 @@ distribuidos/
 **Error**: `Cannot connect to the Docker daemon`
 
 **Solución**:
+
 1. Abre **Docker Desktop** desde Applications
 2. Espera a que el ícono deje de parpadear
 3. Verifica: `docker info`
@@ -400,22 +420,26 @@ distribuidos/
 Ver guía completa: `TROUBLESHOOTING.md`
 
 ### Servicios no inician
+
 ```bash
 docker-compose down -v
 docker-compose up -d
 ```
 
 ### Puerto ocupado
+
 ```bash
 lsof -i :3000
 kill -9 <PID>
 ```
 
 ### Prometheus no recolecta métricas
+
 - Verificar: http://localhost:9090/targets
 - Todos deben estar en estado "UP"
 
 ### MySQL no conecta
+
 ```bash
 docker-compose logs mysql
 docker-compose restart mysql
@@ -423,11 +447,13 @@ docker-compose restart mysql
 ```
 
 ### No llegan emails
+
 - Verificar config en `alertmanager/alertmanager.yml`
 - Ver logs: `docker-compose logs alertmanager`
 - Verificar App Password de Gmail
 
 ### Grafana no muestra datos
+
 - Verificar datasource: Configuration → Data Sources → Prometheus
 - URL debe ser: `http://prometheus:9090`
 - Click "Save & Test"
@@ -447,21 +473,22 @@ docker-compose restart mysql
 
 ## 📦 Tecnologías
 
-| Componente | Tecnología | Puerto |
-|------------|-----------|--------|
-| Aplicación | Node.js + Apollo GraphQL | 4000 |
-| Base de Datos | MySQL 8.0 | 3306 |
-| Load Balancer | Nginx | 80, 8080 |
-| Monitoreo | Prometheus | 9090 |
-| Visualización | Grafana | 3000 |
-| Alertas | Alertmanager | 9093 |
-| Host Metrics | node_exporter | 9100 |
-| MySQL Metrics | mysqld_exporter | 9104 |
-| Nginx Metrics | nginx_exporter | 9113 |
+| Componente    | Tecnología               | Puerto   |
+| ------------- | ------------------------ | -------- |
+| Aplicación    | Node.js + Apollo GraphQL | 4000     |
+| Base de Datos | MySQL 8.0                | 3306     |
+| Load Balancer | Nginx                    | 80, 8080 |
+| Monitoreo     | Prometheus               | 9090     |
+| Visualización | Grafana                  | 3000     |
+| Alertas       | Alertmanager             | 9093     |
+| Host Metrics  | node_exporter            | 9100     |
+| MySQL Metrics | mysqld_exporter          | 9104     |
+| Nginx Metrics | nginx_exporter           | 9113     |
 
 ## ✅ Checklist de Evaluación
 
 ### Análisis del Código (50%)
+
 - [x] docker-compose.yml con servicios, redes y volúmenes
 - [x] prometheus.yml con scrape_configs para todos los targets
 - [x] alert_rules.yml con reglas en PromQL
@@ -471,6 +498,7 @@ docker-compose restart mysql
 - [x] Alertmanager configurado para email
 
 ### Sustentación (50%)
+
 - [ ] Sistema levantado con docker-compose
 - [ ] Demostración de balanceo de carga
 - [ ] Dashboard en Grafana funcional
@@ -491,7 +519,7 @@ docker-compose restart mysql
 
 1. **Configurar email** en `alertmanager/alertmanager.yml`
 2. **Instalar dependencias**: `npm install`
-3. **Iniciar sistema**: `./scripts/start.sh`
+3. **Iniciar sistema**: `docker-compose up --build -d`
 4. **Verificar acceso**: Abrir Grafana, Prometheus, Alertmanager
 5. **Practicar demo**: Ejecutar scripts de prueba
 6. **Preparar sustentación**: Revisar explicación de métricas

@@ -19,14 +19,24 @@ services:
       MYSQL_USER: appuser
       MYSQL_PASSWORD: apppassword
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - monitoring
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpassword"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "root",
+          "-prootpassword",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -52,7 +62,15 @@ services:
       mysql:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4000/.well-known/apollo/server-health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:4000/.well-known/apollo/server-health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -78,7 +96,15 @@ services:
       mysql:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4000/.well-known/apollo/server-health"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:4000/.well-known/apollo/server-health",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -100,7 +126,15 @@ services:
       - app1
       - app2
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/stub_status"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--quiet",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/stub_status",
+        ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -111,10 +145,10 @@ services:
     container_name: node_exporter
     restart: unless-stopped
     command:
-      - '--path.procfs=/host/proc'
-      - '--path.sysfs=/host/sys'
-      - '--path.rootfs=/rootfs'
-      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+      - "--path.procfs=/host/proc"
+      - "--path.sysfs=/host/sys"
+      - "--path.rootfs=/rootfs"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
     ports:
       - "9100:9100"
     volumes:
@@ -130,8 +164,8 @@ services:
     container_name: mysqld_exporter
     restart: unless-stopped
     command:
-      - '--mysqld.username=root:rootpassword'
-      - '--mysqld.address=mysql:3306'
+      - "--mysqld.username=root:rootpassword"
+      - "--mysqld.address=mysql:3306"
     environment:
       - DATA_SOURCE_NAME=root:rootpassword@tcp(mysql:3306)/
     ports:
@@ -148,7 +182,7 @@ services:
     container_name: nginx_exporter
     restart: unless-stopped
     command:
-      - '-nginx.scrape-uri=http://nginx:8080/stub_status'
+      - "-nginx.scrape-uri=http://nginx:8080/stub_status"
     ports:
       - "9113:9113"
     networks:
@@ -162,11 +196,11 @@ services:
     container_name: prometheus
     restart: unless-stopped
     command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-      - '--web.enable-lifecycle'
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+      - "--web.enable-lifecycle"
     ports:
       - "9090:9090"
     volumes:
@@ -186,8 +220,8 @@ services:
     container_name: alertmanager
     restart: unless-stopped
     command:
-      - '--config.file=/etc/alertmanager/alertmanager.yml'
-      - '--storage.path=/alertmanager'
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+      - "--storage.path=/alertmanager"
     ports:
       - "9093:9093"
     volumes:
