@@ -6,14 +6,14 @@ Sistema completo de monitoreo para una aplicación distribuida con microservicio
 
 Este laboratorio implementa:
 
-- ✅ 2 instancias de aplicación GraphQL (Node.js)
-- ✅ Base de datos MySQL con persistencia
-- ✅ Balanceador de carga Nginx (round-robin)
-- ✅ Stack de monitoreo: Prometheus + Grafana + Alertmanager
-- ✅ Exporters: node_exporter, mysqld_exporter, nginx_exporter
-- ✅ Dashboard con 13+ métricas clave
-- ✅ 18 reglas de alerta configuradas
-- ✅ Notificaciones por email
+- 2 instancias de aplicación GraphQL (Node.js)
+- Base de datos MySQL con persistencia
+- Balanceador de carga Nginx (round-robin)
+- Stack de monitoreo: Prometheus + Grafana + Alertmanager
+- Exporters: node_exporter, mysqld_exporter, nginx_exporter
+- Dashboard con 13+ métricas clave
+- 18 reglas de alerta configuradas
+- Notificaciones por email
 
 ## Inicio
 
